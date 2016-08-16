@@ -8,6 +8,8 @@
 #include "FixSession.h"
 #include "FixMessageUtil.h"
 
+Nan::Persistent<Function> g_Ctor;
+
 class FixSessionAsyncWorker : public Nan::AsyncWorker {
 	public:
 		FixSessionAsyncWorker(Nan::Callback *callback, FIX::Session* session)
@@ -17,7 +19,8 @@ class FixSessionAsyncWorker : public Nan::AsyncWorker {
 		void HandleOKCallback () {
 			Nan::HandleScope scope;
 
-			if(!callback->IsEmpty()) {
+            v8::Local<v8::Function> fn = callback->GetFunction();
+	        if(!(fn->IsUndefined() || fn->IsNull())) {
 				Local<Value> argv[] = {
 					Nan::Null()
 				};
@@ -95,7 +98,7 @@ void FixSession::setSession(FIX::Session* session) {
 	mSession = session;
 }
 
-void FixSession::Initialize(Handle<Object> target) {
+void FixSession::Initialize() {
 	Nan::HandleScope scope;
 
 	Local<FunctionTemplate> ctor = Nan::New<FunctionTemplate>(FixSession::New);
@@ -117,34 +120,19 @@ void FixSession::Initialize(Handle<Object> target) {
 	Nan::SetAccessor(proto, Nan::New("senderSeqNum").ToLocalChecked(), getSenderSeqNum, setSenderSeqNum);
 	Nan::SetAccessor(proto, Nan::New("targetSeqNum").ToLocalChecked(), getTargetSeqNum, setTargetSeqNum);
 
-	target->Set(Nan::New("FixSession").ToLocalChecked(), ctor->GetFunction());
+	g_Ctor.Reset(ctor->GetFunction());
 }
 
-Handle<Object> FixSession::wrapFixSession(FixSession* fixSession) {
-	Local<FunctionTemplate> ctor = Nan::New<FunctionTemplate>();
+Handle<Object> FixSession::wrapFixSession(FIX::Session *session) {
+	Nan::EscapableHandleScope scope;
+    FixSession* fs = new FixSession();
+    fs->setSession(session);
 
-	ctor->InstanceTemplate()->SetInternalFieldCount(1);
-	ctor->SetClassName(Nan::New("FixSession").ToLocalChecked());
+	Local<Function> ctor = Nan::New<Function>(g_Ctor);
+	Local<Object> instance = Nan::NewInstance(ctor, 0, {}).ToLocalChecked();
 
-	Local<ObjectTemplate> proto = ctor->PrototypeTemplate();
-
-	Nan::SetPrototypeMethod(ctor, "disconnect", disconnect);
-	Nan::SetPrototypeMethod(ctor, "getSessionID", getSessionID);
-	Nan::SetPrototypeMethod(ctor, "isEnabled", isEnabled);
-	Nan::SetPrototypeMethod(ctor, "isLoggedOn", isLoggedOn);
-	Nan::SetPrototypeMethod(ctor, "logon", logon);
-	Nan::SetPrototypeMethod(ctor, "logout", logout);
-	Nan::SetPrototypeMethod(ctor, "refresh", refresh);
-	Nan::SetPrototypeMethod(ctor, "reset", reset);
-
-	Nan::SetAccessor(proto, Nan::New("senderSeqNum").ToLocalChecked(), getSenderSeqNum, setSenderSeqNum);
-	Nan::SetAccessor(proto, Nan::New("targetSeqNum").ToLocalChecked(), getTargetSeqNum, setTargetSeqNum);
-
-	Handle<Object> obj = ctor->InstanceTemplate()->NewInstance();
-
-	//obj->SetAlignedPointerInInternalField(0, Nan::New<External>(fixSession));
-	fixSession->Wrap(obj);
-	return obj;
+	fs->Wrap(instance);
+    return scope.Escape(instance);
 }
 
 NAN_METHOD(FixSession::New) {
@@ -241,26 +229,29 @@ NAN_METHOD(FixSession::reset) {
 }
 
 NAN_GETTER(FixSession::getSenderSeqNum) {
-	FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.Holder());
+	Nan::HandleScope scope;
+	FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.This());
 	info.GetReturnValue().Set(Nan::New<Number>(instance->mSession->getExpectedSenderNum()));
 }
 
 NAN_SETTER(FixSession::setSenderSeqNum) {
+	Nan::HandleScope scope;
 	if(value->IsNumber()) {
-		FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.Holder());
+		FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.This());
 		instance->mSession->setNextSenderMsgSeqNum(value->Uint32Value());
 	}
 }
 
 NAN_GETTER(FixSession::getTargetSeqNum) {
-	FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.Holder());
+	Nan::HandleScope scope;
+	FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.This());
 	info.GetReturnValue().Set(Nan::New<Number>(instance->mSession->getExpectedTargetNum()));
 }
 
 NAN_SETTER(FixSession::setTargetSeqNum) {
 	Nan::HandleScope scope;
 	if(value->IsNumber()) {
-		FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.Holder());
+		FixSession* instance = Nan::ObjectWrap::Unwrap<FixSession>(info.This());
 		instance->mSession->setNextTargetMsgSeqNum(value->Uint32Value());
 	}
 }
