@@ -117,9 +117,11 @@ NAN_METHOD(FixInitiator::New) {
 			String::Utf8Value usernameStr(creds->Get(Nan::New<String>("username").ToLocalChecked())->ToString());
 			String::Utf8Value passwordStr(creds->Get(Nan::New<String>("password").ToLocalChecked())->ToString());
 			String::Utf8Value senderSubIdStr(creds->Get(Nan::New<String>("sender_sub_id").ToLocalChecked())->ToString());
+			String::Utf8Value targetSubIdStr(creds->Get(Nan::New<String>("target_sub_id").ToLocalChecked())->ToString());
 			credentials->username = std::string(*usernameStr);
 			credentials->password = std::string(*passwordStr);
 			credentials->sender_sub_id = std::string(*senderSubIdStr);
+			credentials->target_sub_id = std::string(*targetSubIdStr);
 			initiator->mFixApplication->setCredentials(credentials);
 		}
 	}

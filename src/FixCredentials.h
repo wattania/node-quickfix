@@ -11,7 +11,8 @@
 typedef struct {
 	std::string username;
 	std::string password;
-    std::string sender_sub_id;
+  std::string sender_sub_id;
+  std::string target_sub_id;
 } fix_credentials;
 
 #endif /* FIXCREDENTIALS_H_ */
