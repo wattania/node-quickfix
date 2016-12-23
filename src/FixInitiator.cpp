@@ -46,6 +46,7 @@ void FixInitiator::Initialize(Handle<Object> target) {
 	Nan::SetPrototypeMethod(ctor, "start", start);
 	Nan::SetPrototypeMethod(ctor, "send", send);
 	Nan::SetPrototypeMethod(ctor, "sendRaw", sendRaw);
+	Nan::SetPrototypeMethod(ctor, "sendWithQualifier", sendWithQualifier);
 	Nan::SetPrototypeMethod(ctor, "stop", stop);
 	Nan::SetPrototypeMethod(ctor, "isLoggedOn", isLoggedOn);
 	Nan::SetPrototypeMethod(ctor, "getSessions", getSessions);
@@ -153,6 +154,22 @@ NAN_METHOD(FixInitiator::send) {
 
 	return;
 }
+/* --- new func ---- */
+NAN_METHOD(FixInitiator::sendWithQualifier) {
+	Nan::HandleScope scope;
+
+	Local<Object> message = info[0]->ToObject();
+
+	// == qualifier == (messsge, callback, qualifier)//
+	String::Utf8Value qualifier(info[2]->ToString());
+	std::string qualifier1 = std::string(* qualifier);
+	FIX::Message* fixMessage = new FIX::Message();
+	FixMessageUtil::js2Fix(fixMessage, message);
+
+	sendAsyncWithQualifier(info, fixMessage, qualifier1);
+
+	return;
+}
 
 NAN_METHOD(FixInitiator::sendRaw) {
 	Nan::HandleScope scope;
@@ -164,6 +181,14 @@ NAN_METHOD(FixInitiator::sendRaw) {
 	sendAsync(info, fixMessage);
 
 	return;
+}
+/* --- new func ---- */
+void FixInitiator::sendAsyncWithQualifier(const Nan::FunctionCallbackInfo<v8::Value>& info, FIX::Message* fixMessage, std::string aQualifier) {
+	FixInitiator* instance = Nan::ObjectWrap::Unwrap<FixInitiator>(info.This());
+ 
+	Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
+
+	Nan::AsyncQueueWorker(new FixSendWorker(callback, fixMessage, aQualifier));
 }
 
 void FixInitiator::sendAsync(const Nan::FunctionCallbackInfo<v8::Value>& info, FIX::Message* fixMessage) {

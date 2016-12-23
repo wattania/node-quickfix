@@ -25,6 +25,7 @@ class FixInitiator : public FixConnection {
   static NAN_METHOD(start);
   static NAN_METHOD(send);
   static NAN_METHOD(sendRaw);
+  static NAN_METHOD(sendWithQualifier);
   static NAN_METHOD(stop);
   static NAN_METHOD(isLoggedOn);
   static NAN_METHOD(getSessions);
@@ -36,6 +37,7 @@ class FixInitiator : public FixConnection {
   ~FixInitiator();
   FIX::SocketInitiator* mInitiator;
   static void sendAsync(const Nan::FunctionCallbackInfo<v8::Value>& info, FIX::Message* message);
+  static void sendAsyncWithQualifier(const Nan::FunctionCallbackInfo<v8::Value>& info, FIX::Message* fixMessage, std::string aQualifier);
 };
 
 #endif

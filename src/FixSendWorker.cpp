@@ -22,7 +22,14 @@ using namespace node;
 // should go on `this`.
 void FixSendWorker::Execute () {
 	try {
-		FIX::Session::sendToTarget(*message);
+
+		if(!qualifier.empty()){
+			FIX::Session::sendToTarget(*message, qualifier);
+		}else{
+			FIX::Session::sendToTarget(*message);	
+		}
+		
+
 	} catch(FIX::SessionNotFound& e) {
 		std::cout << "*** Session not found!" << std::endl;
 	}

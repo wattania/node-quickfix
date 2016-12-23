@@ -16,6 +16,10 @@ class FixSendWorker : public Nan::AsyncWorker
 	public:
 		FixSendWorker(Nan::Callback *callback, FIX::Message* message)
 			: Nan::AsyncWorker(callback), message(message) {}
+
+		FixSendWorker(Nan::Callback *callback, FIX::Message* message, std::string qualifier)
+			: Nan::AsyncWorker(callback), message(message), qualifier(qualifier) {}
+
 		~FixSendWorker() {
 			if(message) {
 				delete message;
@@ -27,6 +31,7 @@ class FixSendWorker : public Nan::AsyncWorker
 
 	private:
 		FIX::Message* message;
+		std::string qualifier;
 };
 
 
