@@ -50,6 +50,7 @@
       },
       'include_dirs': [
         "<!(node -e \"require('nan')\")",
+        '/usr/pgsql/include',
         '/usr/local/include',
         '/usr/local/include/quickfix'
       ],
